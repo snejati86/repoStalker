@@ -64,4 +64,9 @@ public class ImageCache implements Cache{
     public void clear() {
         mCache.evictAll();
     }
+
+    @Override
+    public void clearKeyUri(String keyPrefix) {
+
+    }
 }

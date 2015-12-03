@@ -194,4 +194,9 @@ public class DiskLruImageCache implements Cache {
     public void clear() {
         clearCache();
     }
+
+    @Override
+    public void clearKeyUri(String keyPrefix) {
+
+    }
 }

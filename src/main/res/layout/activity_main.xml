@@ -3,6 +3,7 @@
     android:layout_width="fill_parent"
     android:orientation="vertical"
     android:weightSum="2">
+    <include layout="@layout/include_progress_overlay"/>
     <TextView
         android:layout_width="fill_parent"
         android:textAlignment="center"

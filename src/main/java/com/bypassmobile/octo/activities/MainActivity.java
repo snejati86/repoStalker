@@ -1,17 +1,23 @@
 package com.bypassmobile.octo.activities;
 
-import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bypassmobile.octo.R;
-import com.bypassmobile.octo.application.ByPassApplication;
+import com.bypassmobile.octo.di.AppComponent;
 import com.bypassmobile.octo.model.User;
 import com.bypassmobile.octo.rest.GithubEndpoint;
 
@@ -26,54 +32,93 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class MainActivity extends Activity implements OnUserClicked
+public class MainActivity extends BaseActivity implements OnUserClicked
 {
+    /**
+     * TAG to indentify this class for logging.
+     */
+    private static final String TAG = MainActivity.class.getSimpleName();
+
     @Bind(R.id.my_recycler_view)
     RecyclerView userList;
 
     @Bind(R.id.current_user)
     TextView currentUser;
 
-    RecyclerView.LayoutManager mLayoutManager;
-
-    GithubUserAdapter mAdapter;
+    @Bind(R.id.progress_overlay)
+    FrameLayout progressBarOverlay;
 
     @Inject
     GithubEndpoint githubEndpoint;
 
-    private Stack<User> usersStack;
+    @Inject
+    ConnectivityManager connectivityManager;
+
+    RecyclerView.LayoutManager mLayoutManager;
+
+    GithubUserAdapter mAdapter;
+
+    private Stack<User> history;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        usersStack = new Stack<User>();
         ButterKnife.bind(this);
-        ((ByPassApplication)getApplication()).getAppComponent().inject(this);
-        userList.setHasFixedSize(true);
+        if ( connectivityManager.getActiveNetworkInfo() != null )
+        {
+            history = new Stack<User>();
+            userList.setHasFixedSize(true);
 
-        // use a linear layout manager
-        mLayoutManager = new LinearLayoutManager(this);
-        userList.setLayoutManager(mLayoutManager);
+            mLayoutManager = new LinearLayoutManager(this);
+            userList.setLayoutManager(mLayoutManager);
 
-        // specify an adapter (see also next example)
-        mAdapter = new GithubUserAdapter(this,this);
-        userList.setAdapter(mAdapter);
-        githubEndpoint.getOrganizationMember("bypasslane", new Callback<List<User>>() {
-            @Override
-            public void success(List<User> users, Response response) {
-                currentUser.setText("bypasslane");
-                for (User user : users) {
-                    mAdapter.addUser(user);
+            mAdapter = new GithubUserAdapter(this,this);
+            userList.setAdapter(mAdapter);
+            setAnimation(0f, 1f, View.VISIBLE);
+            history.add(new User("bypasslane","fakeURL"));
+            githubEndpoint.getOrganizationMember("bypasslane", new Callback<List<User>>() {
+                @Override
+                public void success(List<User> users, Response response) {
+                    setAnimation(1f, 0f, View.GONE);
+                    currentUser.setText("bypasslane");
+                    for (User user : users) {
+                        mAdapter.addUser(user);
+                    }
                 }
-            }
 
-            @Override
-            public void failure(RetrofitError error) {
-                throw error;
-            }
-        });
-        //mAdapter.addUser(new User("Meing","https://avatars3.githubusercontent.com/u/13679?v=3&s=96"));
+                @Override
+                public void failure(RetrofitError error) {
+                    setAnimation(1f, 0f, View.GONE);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setMessage("Github unavailable, Try back later.")
+                            .setTitle("Github Error").setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    });
+
+                    builder.create().show();
+                }
+            });
+        }
+        else
+        {
+            Log.d(TAG, "Offline.");
+        }
+    }
+
+    private void setAnimation(float fromAlpha, float toAlpha, int visible) {
+        Animation inAnimation = new AlphaAnimation(fromAlpha, toAlpha);
+        inAnimation.setDuration(200);
+        progressBarOverlay.setAnimation(inAnimation);
+        progressBarOverlay.setVisibility(visible);
+    }
+
+    @Override
+    void inject(AppComponent appComponent) {
+        appComponent.inject(this);
     }
 
     @Override
@@ -103,23 +148,28 @@ public class MainActivity extends Activity implements OnUserClicked
     }
 
     private void setCurrentUser(final User user) {
+        setAnimation(0f, 1f, View.VISIBLE);
         githubEndpoint.getFollowingUser(user.getName(), new Callback<List<User>>() {
             @Override
             public void success(List<User> users, Response response) {
-                if ( users.size() > 0 ){
-                usersStack.push(user);
-                currentUser.setText(user.getName());
-                mAdapter.clear();
-                for ( User user : users){
-                    mAdapter.addUser(user);
-                }
-                }else{
-                    Toast.makeText(MainActivity.this,"No followers",Toast.LENGTH_SHORT).show();
+                setAnimation(1f, 0f, View.GONE);
+
+                if (users.size() > 0) {
+
+                    history.push(user);
+                    currentUser.setText(user.getName());
+                    mAdapter.clear();
+                    for (User user : users) {
+                        mAdapter.addUser(user);
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "No followers", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void failure(RetrofitError error) {
+                setAnimation(1f, 0f, View.GONE);
 
             }
         });
@@ -127,12 +177,12 @@ public class MainActivity extends Activity implements OnUserClicked
 
     @Override
     public void onBackPressed() {
-        usersStack.pop();
-        if (! usersStack.isEmpty()){
-            setCurrentUser(usersStack.pop());
+        if (! history.isEmpty()){
+            setCurrentUser(history.pop());
         }
         else{
             finish();
         }
     }
+
 }

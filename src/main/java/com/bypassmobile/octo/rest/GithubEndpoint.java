@@ -11,14 +11,14 @@ import retrofit.http.Path;
 
 public interface GithubEndpoint {
 
-    public static final String SERVER = "https://api.github.com";
+    String SERVER = "https://api.github.com";
 
     @GET("/users/{id}")
-    public void getUser(@Path("id") String user, Callback<User> callback);
+    void getUser(@Path("id") String user, Callback<User> callback);
 
     @GET("/users/{id}/following")
-    public void getFollowingUser(@Path("id") String user, Callback<List<User>> callback);
+    void getFollowingUser(@Path("id") String user, Callback<List<User>> callback);
 
     @GET("/orgs/{id}/members")
-    public void getOrganizationMember(@Path("id") String organization, Callback<List<User>> callback);
+    void getOrganizationMember(@Path("id") String organization, Callback<List<User>> callback);
 }

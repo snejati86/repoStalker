@@ -1,6 +1,7 @@
 package com.bypassmobile.octo.di;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
 
 import javax.inject.Singleton;
 
@@ -25,5 +26,13 @@ public class SystemModule {
     public Context provideContext()
     {
         return mContext;
+    }
+
+    @Provides
+    @Singleton
+    public ConnectivityManager provideConnectivityManager(Context context)
+    {
+        return (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
     }
 }

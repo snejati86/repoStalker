@@ -26,7 +26,7 @@ public class RestModule {
     public RestAdapter provideRestAdapter()
     {
         return new RestAdapter.Builder()
-                .setServer(GithubEndpoint.SERVER)
+                .setEndpoint(GithubEndpoint.SERVER)
                 .setLogLevel(RestAdapter.LogLevel.FULL)
                 .build();
     }

@@ -7,7 +7,7 @@ import javax.inject.Singleton;
 import dagger.Component;
 
 /**
- * Application component to construct dependecies.
+ * Application component to construct dependencies.
  */
 @Component(modules = {RestModule.class,ImageModule.class,SystemModule.class})
 @Singleton
