@@ -57,7 +57,7 @@ public class GithubUserAdapter extends RecyclerView.Adapter<GithubUserAdapter.Vi
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         final User user = userList.get(position);
-        Picasso.with(mContext).load(user.getProfileURL()).resize(100,100).centerCrop().into(holder.userImage);
+        Picasso.with(mContext).load(user.getProfileURL()).resize(90,90).centerCrop().into(holder.userImage);
         holder.userNameTextField.setText(user.getName());
         holder.currentUser = user;
     }

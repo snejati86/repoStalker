@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.bypassmobile.octo.image.ImageCache;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.picasso.Cache;
 import com.squareup.picasso.OkHttpDownloader;
 import com.squareup.picasso.Picasso;
 
@@ -29,9 +30,9 @@ public class ImageModule {
     }
 
     @Provides
-    public ImageCache providesCache(Context context)
+    public Cache providesCache()
     {
-        return new ImageCache(CACHE_SIZE,context);
+        return new ImageCache(CACHE_SIZE);
     }
 
     @Provides

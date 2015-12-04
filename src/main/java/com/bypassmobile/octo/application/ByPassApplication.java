@@ -38,6 +38,10 @@ public class ByPassApplication extends Application {
         return appComponent;
     }
 
+    /**
+     * Introduced for testing.
+     * @param app
+     */
     private void setAppComponent(AppComponent app)
     {
         if ( appComponent == null ){

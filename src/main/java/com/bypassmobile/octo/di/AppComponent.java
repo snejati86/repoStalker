@@ -9,7 +9,7 @@ import dagger.Component;
 /**
  * Application component to construct dependencies.
  */
-@Component(modules = {RestModule.class,ImageModule.class,SystemModule.class})
+@Component(modules = {RestModule.class,ImageModule.class,SystemModule.class,AnimationModule.class})
 @Singleton
 public interface AppComponent {
     void inject(MainActivity mainActivity);

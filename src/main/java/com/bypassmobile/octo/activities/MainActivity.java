@@ -1,4 +1,15 @@
+
 package com.bypassmobile.octo.activities;
+
+import java.util.List;
+import java.util.Stack;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -10,27 +21,18 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
 import com.bypassmobile.octo.R;
 import com.bypassmobile.octo.di.AppComponent;
 import com.bypassmobile.octo.model.User;
 import com.bypassmobile.octo.rest.GithubEndpoint;
-
-import java.util.List;
-import java.util.Stack;
-
-import javax.inject.Inject;
-
-import butterknife.Bind;
-import butterknife.ButterKnife;
-import retrofit.Callback;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
 
 public class MainActivity extends BaseActivity implements OnUserClicked
 {
@@ -54,54 +56,77 @@ public class MainActivity extends BaseActivity implements OnUserClicked
     @Inject
     ConnectivityManager connectivityManager;
 
+    @Inject
+    @Named("Fade_in")
+    Animation fadeInAnimation;
+
+    @Inject
+    @Named("Fade_out")
+    Animation fadeOutAnimation;
+
     RecyclerView.LayoutManager mLayoutManager;
 
     GithubUserAdapter mAdapter;
 
+    private Callback<List<User>> callback = new Callback<List<User>>() {
+        @Override
+        public void success(List<User> users, Response response) {
+            //setAnimation(0.4f, 0f, View.GONE);
+            showProgressBar(false);
+            mAdapter.clear();
+            for (User user : users) {
+                mAdapter.addUser(user);
+            }
+            if ( users.size() == 0 ){
+                Toast.makeText(getApplicationContext(),"Not following anyone!",Toast.LENGTH_LONG).show();
+            }
+
+        }
+
+        @Override
+        public void failure(RetrofitError error) {
+            showProgressBar(false);
+            //setAnimation(1f, 0f, View.GONE);
+            popPositiveDialog("Github unavailable, Try back later.", "Github Error");
+
+        }
+    };
+
+    /**
+     * Unbounded history, TODO : Get requirement for max users.
+     */
     private Stack<User> history;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-        if ( connectivityManager.getActiveNetworkInfo() != null )
+        if (connectivityManager.getActiveNetworkInfo() != null)
         {
             history = new Stack<User>();
             userList.setHasFixedSize(true);
-
             mLayoutManager = new LinearLayoutManager(this);
             userList.setLayoutManager(mLayoutManager);
 
-            mAdapter = new GithubUserAdapter(this,this);
+            mAdapter = new GithubUserAdapter(getApplicationContext(), this);
             userList.setAdapter(mAdapter);
-            setAnimation(0f, 1f, View.VISIBLE);
-            history.add(new User("bypasslane","fakeURL"));
-            githubEndpoint.getOrganizationMember("bypasslane", new Callback<List<User>>() {
-                @Override
-                public void success(List<User> users, Response response) {
-                    setAnimation(1f, 0f, View.GONE);
-                    currentUser.setText("bypasslane");
-                    for (User user : users) {
-                        mAdapter.addUser(user);
-                    }
-                }
+            showProgressBar(true);
+            //setAnimation(0f, 0.4f, View.VISIBLE);
+            final User object = new User("bypasslane", "MARKER");
+            setUser(object);
 
-                @Override
-                public void failure(RetrofitError error) {
-                    setAnimation(1f, 0f, View.GONE);
-                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setMessage("Github unavailable, Try back later.")
-                            .setTitle("Github Error").setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            finish();
-                        }
-                    });
-
-                    builder.create().show();
-                }
-            });
         }
         else
         {
@@ -109,79 +134,115 @@ public class MainActivity extends BaseActivity implements OnUserClicked
         }
     }
 
-    private void setAnimation(float fromAlpha, float toAlpha, int visible) {
-        Animation inAnimation = new AlphaAnimation(fromAlpha, toAlpha);
-        inAnimation.setDuration(200);
-        progressBarOverlay.setAnimation(inAnimation);
-        progressBarOverlay.setVisibility(visible);
-    }
 
     @Override
-    void inject(AppComponent appComponent) {
+    void inject(AppComponent appComponent)
+    {
         appComponent.inject(this);
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_settings)
+        {
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-
     @Override
-    public void setUser(User user) {
+    public void setUser(User user)
+    {
         setCurrentUser(user);
     }
 
-    private void setCurrentUser(final User user) {
-        setAnimation(0f, 1f, View.VISIBLE);
-        githubEndpoint.getFollowingUser(user.getName(), new Callback<List<User>>() {
-            @Override
-            public void success(List<User> users, Response response) {
-                setAnimation(1f, 0f, View.GONE);
-
-                if (users.size() > 0) {
-
-                    history.push(user);
-                    currentUser.setText(user.getName());
-                    mAdapter.clear();
-                    for (User user : users) {
-                        mAdapter.addUser(user);
-                    }
-                } else {
-                    Toast.makeText(MainActivity.this, "No followers", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void failure(RetrofitError error) {
-                setAnimation(1f, 0f, View.GONE);
-
-            }
-        });
+    /**
+     * This method will set the current user, for the page.
+     * @param user
+     */
+    private void setCurrentUser(final User user)
+    {
+        showProgressBar(true);
+        history.add(user);
+        currentUser.setText(user.getName());
+        if (! user.getName().equals("bypasslane")) {
+            githubEndpoint.getFollowingUser(user.getName(), callback);
+        }
+        else {
+            githubEndpoint.getOrganizationMember(user.getName(),callback);
+        }
     }
 
     @Override
-    public void onBackPressed() {
-        if (! history.isEmpty()){
-            setCurrentUser(history.pop());
+    public void onBackPressed()
+    {
+        if (!history.isEmpty())
+        {
+            history.pop();
+            //OFF WITH THE CURRENT USER.
+            if (!history.isEmpty())
+            {
+                setCurrentUser(history.pop());
+            }
+            else
+            {
+                finish();
+            }
         }
-        else{
+        else
+        {
             finish();
+        }
+    }
+
+    /**
+     * Method that pops an OK dialog.
+     * 
+     * @param message Message to be shown
+     * @param title Alert Dialog title.
+     */
+    private void popPositiveDialog(String message, String title)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setMessage(message).setTitle(title)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                });
+        builder.create().show();
+    }
+
+    /**
+     * This method will pop up a progressbar overlaying the screen.
+     * @param setVisibile
+     */
+    private void showProgressBar(boolean setVisibile)
+    {
+        if (setVisibile)
+        {
+            progressBarOverlay.setVisibility(View.VISIBLE);
+            progressBarOverlay.startAnimation(fadeInAnimation);
+        }
+        else
+        {
+            progressBarOverlay.startAnimation(fadeOutAnimation);
+            progressBarOverlay.setVisibility(View.GONE);
         }
     }
 

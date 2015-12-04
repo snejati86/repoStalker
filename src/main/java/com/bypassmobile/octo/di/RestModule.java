@@ -6,6 +6,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 
 /**
@@ -27,7 +28,12 @@ public class RestModule {
     {
         return new RestAdapter.Builder()
                 .setEndpoint(GithubEndpoint.SERVER)
-                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setLogLevel(RestAdapter.LogLevel.FULL).setRequestInterceptor(new RequestInterceptor() {
+                    @Override
+                    public void intercept(RequestFacade request) {
+                        request.addHeader("Authorization", "token b0ba550794a1019fb4dc01045bb9a1dbd8f03471");
+                    }
+                })
                 .build();
     }
 }
