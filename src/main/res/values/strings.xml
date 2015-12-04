@@ -3,4 +3,9 @@
 
     <string name="app_name">Octo-Stalker</string>
     <string name="action_settings">Settings</string>
+    <string name="OK">OK</string>
+    <string name="ROOT_ACCOUNT">bypasslane</string>
+    <string name="not_following_message">Not following anyone!</string>
+    <string name="general_github_error">Github unavailable, Try back later.</string>
+    <string name="title_github_error">Github Error</string>
 </resources>

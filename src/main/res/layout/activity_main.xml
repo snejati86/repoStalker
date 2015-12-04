@@ -18,6 +18,7 @@
         android:layout_marginTop="10dp"
         android:id="@+id/my_recycler_view"
         android:scrollbars="vertical"
+        android:background="#c2c4c6"
         android:layout_weight="1.8"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

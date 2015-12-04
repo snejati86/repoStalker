@@ -31,7 +31,7 @@ public class RestModule {
                 .setLogLevel(RestAdapter.LogLevel.FULL).setRequestInterceptor(new RequestInterceptor() {
                     @Override
                     public void intercept(RequestFacade request) {
-                        request.addHeader("Authorization", "token b0ba550794a1019fb4dc01045bb9a1dbd8f03471");
+                        request.addHeader("Authorization", "token 9b36c263c101a02674929f096c0db31fc5729536");
                     }
                 })
                 .build();

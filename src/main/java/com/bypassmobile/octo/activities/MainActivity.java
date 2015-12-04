@@ -71,14 +71,13 @@ public class MainActivity extends BaseActivity implements OnUserClicked
     private Callback<List<User>> callback = new Callback<List<User>>() {
         @Override
         public void success(List<User> users, Response response) {
-            //setAnimation(0.4f, 0f, View.GONE);
             showProgressBar(false);
             mAdapter.clear();
             for (User user : users) {
                 mAdapter.addUser(user);
             }
             if ( users.size() == 0 ){
-                Toast.makeText(getApplicationContext(),"Not following anyone!",Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), R.string.not_following_message,Toast.LENGTH_LONG).show();
             }
 
         }
@@ -86,8 +85,7 @@ public class MainActivity extends BaseActivity implements OnUserClicked
         @Override
         public void failure(RetrofitError error) {
             showProgressBar(false);
-            //setAnimation(1f, 0f, View.GONE);
-            popPositiveDialog("Github unavailable, Try back later.", "Github Error");
+            popPositiveDialog(getString(R.string.general_github_error), getString(R.string.title_github_error));
 
         }
     };
@@ -123,8 +121,7 @@ public class MainActivity extends BaseActivity implements OnUserClicked
             mAdapter = new GithubUserAdapter(getApplicationContext(), this);
             userList.setAdapter(mAdapter);
             showProgressBar(true);
-            //setAnimation(0f, 0.4f, View.VISIBLE);
-            final User object = new User("bypasslane", "MARKER");
+            final User object = new User(getString(R.string.ROOT_ACCOUNT), "MARKER");
             setUser(object);
 
         }
@@ -179,7 +176,7 @@ public class MainActivity extends BaseActivity implements OnUserClicked
         showProgressBar(true);
         history.add(user);
         currentUser.setText(user.getName());
-        if (! user.getName().equals("bypasslane")) {
+        if (! user.getName().equals(getString(R.string.ROOT_ACCOUNT))) {
             githubEndpoint.getFollowingUser(user.getName(), callback);
         }
         else {
@@ -219,7 +216,7 @@ public class MainActivity extends BaseActivity implements OnUserClicked
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setMessage(message).setTitle(title)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.OK, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         finish();
